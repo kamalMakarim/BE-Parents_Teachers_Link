@@ -5,30 +5,24 @@ const logRoutes = require("./src/routes/log.routes");
 const studentRoutes = require("./src/routes/student.routes");
 const chatRoutes = require("./src/routes/chat.routes");
 const cors = require("cors");
-
-const corsOptions = {
-  origin: true, // allow to server to accept request from different origin
-  credentials: true, // allow credentials
-  methods: ['GET', 'POST', 'DELETE', 'PUT'] // allow GET and POST requests
-};
+require("dotenv").config();
 port = process.env.PORT || 5000;
 
 
 const app = express();
 
 app.use(cors({
-  origin: 'https://bukom.vercel.app',
+  origin: process.env.FRONTEND_URL,
   credentials: true
 }));
 
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://bukom.vercel.app');
+  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
   next();
 });
-require("dotenv").config();
 require("./src/config/monggo.config").connectDB();
 
 app.use(express.json());
