@@ -8,7 +8,6 @@ exports.login = async (req, res) => {
             maxAge: 3600000, // 1 hour in milliseconds
             secure: true,    // Ensures the cookie is sent over HTTPS
             sameSite: 'strict', // Adjust according to your needs, could also be 'lax' or 'none' (if cross-site)
-            domain: `${process.env.FRONTEND_URL}/login`// Specify your frontend URL here
         });
         res.status(200).json(response);
     } catch (error) {
