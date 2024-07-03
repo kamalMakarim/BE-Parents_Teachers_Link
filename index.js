@@ -7,16 +7,7 @@ const chatRoutes = require("./src/routes/chat.routes");
 const cors = require("cors");
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    // Allow any localhost origin
-    if (/^http:\/\/localhost(:[0-9]+)?$/.test(origin)) {
-      return callback(null, true);
-    }
-    // Disallow all other origins
-    return callback(new Error('Not allowed by CORS'));
-  },
+  origin: "*", // Allow requests from any origin
   credentials: true, // allow credentials
   methods: ['GET', 'POST', 'DELETE', 'PUT'] // allow GET and POST requests
 };
