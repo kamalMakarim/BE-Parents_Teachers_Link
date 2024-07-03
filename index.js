@@ -7,11 +7,11 @@ const chatRoutes = require("./src/routes/chat.routes");
 const cors = require("cors");
 
 const corsOptions = {
-  origin: "*", // Allow requests from any origin
+  origin: true, // allow to server to accept request from different origin
   credentials: true, // allow credentials
   methods: ['GET', 'POST', 'DELETE', 'PUT'] // allow GET and POST requests
 };
-port = process.env.PORT || 3000;
+port = process.env.PORT || 5000;
 
 
 const app = express();
