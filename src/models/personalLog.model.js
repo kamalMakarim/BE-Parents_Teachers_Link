@@ -7,7 +7,7 @@ const PersonalLogSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
-        enum: ['Incident', 'Daily Report', 'Reminder']
+        enum: ['Report', 'Praise', 'Incident', 'Announcement']
     },
     writter:{
         type: String,
@@ -16,6 +16,12 @@ const PersonalLogSchema = new mongoose.Schema({
     studentId:{
         type: String,
         required: true
+    },
+    status:{
+        type: String,
+        required: true,
+        enum: ['Delivered', 'Read'],
+        default: 'Delivered'
     },
     timestamp: {
         type: Date,

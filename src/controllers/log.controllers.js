@@ -25,3 +25,17 @@ exports.updateLog = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+exports.getLogOfStudent = async (req, res) => {
+    const student  = req.body;
+    try {
+        if (!student) {
+            throw new Error("Please provide student");
+        }
+        const response = await logServiece.getLogOfStudent(req);
+        res.status(200).json(response);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}

@@ -22,6 +22,7 @@ exports.login = async (body) => {
       { expiresIn: "1h" }
     );
 
+
     return {
       message: "Login successful",
       token,

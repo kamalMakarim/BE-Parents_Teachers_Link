@@ -7,13 +7,13 @@ const ClassLogSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
-        enum: ['Incident', 'Daily Report', 'Reminder']
+        enum: ['Report', 'Praise', 'Incident', 'Announcement']
     },
     writter:{
         type: String,
         required: true
     },
-    className:{
+    class_name:{
         type: String,
         required: true
     },

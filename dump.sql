@@ -1,5 +1,10 @@
-DROP TABLE IF EXISTS users, teachers, classes;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS teachers CASCADE;
+DROP TABLE IF EXISTS students CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+
 DROP TYPE IF EXISTS role;
+DROP TYPE IF EXISTS classes;
 
 CREATE TYPE role AS ENUM ('admin', 'teacher', 'parent');
 CREATE TABLE users (
@@ -8,27 +13,23 @@ CREATE TABLE users (
     password VARCHAR(60) NOT NULL,
     role role NOT NULL
 );
-
-CREATE TABLE classes (
-    name VARCHAR(36) UNIQUE NOT NULL,
-    students VARCHAR(36)[]
-);
+CREATE TYPE classes AS ENUM ('Red', 'Blue', 'Green', 'Yellow');
 
 CREATE TABLE teachers (
     username VARCHAR(36) REFERENCES users(username) ON DELETE CASCADE,
-    className VARCHAR(36) REFERENCES classes(name) ON DELETE CASCADE NOT NULL
+    class_name classes NOT NULL
 );
 
 CREATE TABLE students (
     id VARCHAR(36) PRIMARY KEY DEFAULT (gen_random_uuid()::text),
     name VARCHAR(30) NOT NULL,
     batch INTEGER NOT NULL,
-    parentUsername VARCHAR(36) REFERENCES users(username) ON DELETE CASCADE
+    parent_username VARCHAR(36) REFERENCES users (username) ON DELETE CASCADE,
+    class_name classes NOT NULL
 );
 
-INSERT INTO classes (name, students) VALUES 
-('Red', '{}'),
-('Blue', '{}'),
-('Green', '{}'),
-('Yellow', '{}'); 
-
+CREATE TABLE notifications (
+    student_id VARCHAR(36) REFERENCES students(id) ON DELETE CASCADE,
+    for_teacher INTEGER NOT NULL,
+    for_parent INTEGER NOT NULL
+);
