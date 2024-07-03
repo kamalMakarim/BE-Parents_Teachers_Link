@@ -6,8 +6,7 @@ const studentRoutes = require("./src/routes/student.routes");
 const chatRoutes = require("./src/routes/chat.routes");
 const cors = require("cors");
 require("dotenv").config();
-port = process.env.PORT || 5000;
-
+const port = process.env.PORT || 5000;
 
 const app = express();
 
@@ -16,13 +15,16 @@ app.use(cors({
   credentials: true
 }));
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
-  next();
-});
+const corsOptions = {
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // enable if you need cookies or authorization headers
+};
+
+app.use(cors(corsOptions));
+
+
 require("./src/config/monggo.config").connectDB();
 
 app.use(express.json());
