@@ -94,10 +94,13 @@ exports.updateLog = async function (req, res) {
 
 exports.getLogOfStudent = async function (req) {
   try {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
     const logs = await Promise.all([
-      ClassLogSchema.find({ class_name: req.body.class_name }),
-      PersonalLogSchema.find({ studentId: req.body.id }),
-      ChatSchema.find({ studentId: req.body.id }),
+      ClassLogSchema.find({ class_name: req.body.class_name, timestamp: { $gte: oneMonthAgo } }),
+      PersonalLogSchema.find({ studentId: req.body.id, timestamp: { $gte: oneMonthAgo } }),
+      ChatSchema.find({ studentId: req.body.id, timestamp: { $gte: oneMonthAgo }}),
     ]).then(async ([classLogs, personalLogs, chats]) => {
       const combinedLogs = [...classLogs, ...personalLogs, ...chats];
       combinedLogs.sort((a, b) => a.timestamp - b.timestamp);
