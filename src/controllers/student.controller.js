@@ -40,7 +40,7 @@ exports.getStudentClass = async (req, res) => {
       throw new Error("You are not a teacher");
     }
     let students = await studentServices.getStudentClass(teacher[0].class_name);
-    
+
     students = await Promise.all(
       students.map(async (student) => {
         const { rows: notifications } = await neonPool.query(
@@ -51,9 +51,37 @@ exports.getStudentClass = async (req, res) => {
         return student;
       })
     );
-    
+
     res.status(200).json(students);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.getAllStudent = async (req, res) => {
+  try {
+    const students = await studentServices.getAllStudent();
+    res.status(200).json(students);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+exports.deleteStudent = async (req, res) => {
+  try {
+    const response = await studentServices.deleteStudent(req.params.id);
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+exports.updateStudent = async (req, res) => {
+  try {
+    const response = await studentServices.updateStudent(req.body);
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}

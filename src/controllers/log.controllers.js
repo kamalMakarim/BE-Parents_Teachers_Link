@@ -39,3 +39,12 @@ exports.getLogOfStudent = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+exports.deleteAllLogs = async (req, res) => {
+    try {
+        const response = await logServiece.deleteAllLogs();
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}

@@ -6,7 +6,7 @@ router.put('/update-password', auth.authenticate, userControllers.updatePassword
 router.put('/update-password-admin', auth.authenticate, auth.isAdmin, userControllers.updatePasswordByAdmin);
 router.put('/update-display-name', auth.authenticate, userControllers.updateDisplayName);   
 router.delete('/delete/:username', auth.authenticate, auth.isAdmin, userControllers.deleteUser);
-
+router.get('/all', auth.authenticate, auth.isAdmin, userControllers.getAllUsers);
 
 module.exports = router;
 

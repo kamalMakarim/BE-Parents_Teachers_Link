@@ -52,7 +52,9 @@ exports.addUser = async (body) => {
     const usernameRegex = /^[a-zA-Z0-9_.-]{3,20}$/;
     const passwordRegex = /^(?=.*[a-z])(?=.*\d)[a-zA-Z\d]{8,20}$/;
     if (!usernameRegex.test(username))
-      throw new Error(`Usernnme must be alphanumeric and can contain ".", "_", "-"`);
+      throw new Error(
+        `Usernnme must be alphanumeric and can contain ".", "_", "-"`
+      );
     if (!passwordRegex.test(password))
       throw new Error(
         "Password must contain at least 8 characters, 1 lowercase letter and 1 number"
@@ -86,7 +88,7 @@ exports.updatePasswordByUser = async (req, res) => {
   try {
     // Validate request
     if (!new_password) throw new Error("Please provide new password");
-    const passwordRegex =  /^(?=.*[a-z])(?=.*\d)[a-zA-Z\d]{8,20}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*\d)[a-zA-Z\d]{8,20}$/;
     if (!passwordRegex.test(new_password))
       throw new Error(
         "Password must contain at least 8 characters and 20 characters max, 1 lowercase letter and 1 number"
@@ -127,7 +129,7 @@ exports.updatePasswordByAdmin = async (body) => {
     // Validate request
     if (!username) throw new Error("Please provide username");
     if (!new_password) throw new Error("Please provide new password");
-    const passwordRegex =  /^(?=.*[a-z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*\d)[a-zA-Z\d]{8,}$/;
     if (!passwordRegex.test(new_password))
       throw new Error(
         "Password must contain at least 8 characters, 1 lowercase letter and 1 number"
@@ -161,9 +163,9 @@ exports.updateDisplayName = async (req, body) => {
       throw new Error(
         "Display name must be at least 3 characters and at most 30 characters"
       );
-    
-      username = req.user.username;
-    
+
+    username = req.user.username;
+
     // Update display name in the database
     await neonPool.query(
       `UPDATE users SET display_name = $1 WHERE username = $2`,
@@ -173,6 +175,36 @@ exports.updateDisplayName = async (req, body) => {
       message: "Display name updated successfully",
       display_name: display_name,
     };
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+exports.getAllUsers = async () => {
+  try {
+    const { rows: users } = await neonPool.query(`SELECT * FROM users`);
+    users.forEach((user) => {
+      user.password = undefined;
+    });
+    await Promise.all(
+      users.map(async (user) => {
+        if (user.role == "teacher") {
+          const { rows: teacher } = await neonPool.query(
+            `SELECT * FROM teachers WHERE username = $1`,
+            [user.username]
+          );
+          user.class_name = teacher[0].class_name;
+        }else if (user.role == "parent") {
+          const { rows: students } = await neonPool.query(
+            `SELECT * FROM students WHERE parent_username = $1`,
+            [user.username]
+          );
+          user.students = students;
+        }
+        return user;
+      })
+    );
+    return users;
   } catch (error) {
     throw new Error(error);
   }

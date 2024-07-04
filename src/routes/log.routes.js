@@ -6,5 +6,6 @@ router.post('/add', auth.authenticate, auth.isTeacher, logControllers.createLog)
 router.delete('/delete', auth.authenticate, auth.isTeacher, logControllers.deleteLog);
 router.put('/update', auth.authenticate, auth.isTeacher, logControllers.updateLog);
 router.post('/getLogOfstudent', auth.authenticate, logControllers.getLogOfStudent);
+router.delete('/deleteAll', auth.authenticate, auth.isAdmin, logControllers.deleteAllLogs);
 
 module.exports = router;

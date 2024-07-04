@@ -135,3 +135,16 @@ exports.getLogOfStudent = async function (req) {
     throw new Error(error);
   }
 };
+
+exports.deleteAllLogs = async function () {
+  try {
+    await ClassLogSchema.deleteMany({});
+    await PersonalLogSchema.deleteMany({});
+    await ChatSchema.deleteMany({});
+    return {
+      message: "All logs deleted",
+    };
+  } catch (error) {
+    throw new Error(error);
+  }
+}

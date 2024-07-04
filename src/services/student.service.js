@@ -44,17 +44,52 @@ exports.getStudentsOfParent = async (parent_username) => {
   }
 };
 
-exports.getStudent = async (studentId) => {
+exports.getAllStudent = async () => {
   try {
-    const { rows: student } = await neonPool.query(
-      `SELECT * FROM students WHERE id = $1`,
-      [studentId]
-    );
+    const { rows: student } = await neonPool.query(`SELECT * FROM students`);
     return student;
   } catch (error) {
     throw new Error(error);
   }
 };
+
+exports.deleteStudent = async (id) => {
+  try {
+    await neonPool.query(`DELETE FROM students WHERE id = $1`, [id]);
+    await neonPool.query(`DELETE FROM notifications WHERE student_id = $1`, [id]);
+    return { message: "Student deleted" };
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+exports.updateStudent = async (body) => {
+  const { id, name, batch, parent_username, class_name } = body;
+  try {
+    // Validate request
+    if (!id || !name || !batch || !parent_username || !class_name) {
+      throw new Error("All fields are required");
+    }
+
+    // Check if parent exists
+    const { rows: parent } = await neonPool.query(
+      `SELECT * FROM users WHERE username = $1`,
+      [parent_username]
+    );
+    if (parent.length === 0) {
+      throw new Error("Parent does not exist");
+    }
+
+    // Update student in the database
+    await neonPool.query(
+      `UPDATE students SET name = $1, batch = $2, parent_username = $3, class_name = $4 WHERE id = $5`,
+      [name, batch, parent_username, class_name, id]
+    );
+    return { message: "Student updated" };
+  } catch (error) {
+    throw new Error(error);
+  }
+}
 
 exports.getStudentClass = async (class_name) => {
   try {
