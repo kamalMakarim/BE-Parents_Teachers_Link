@@ -13,7 +13,7 @@ CREATE TABLE users (
     password VARCHAR(60) NOT NULL,
     role role NOT NULL
 );
-CREATE TYPE classes AS ENUM ('Red', 'Blue', 'Green', 'Yellow');
+CREATE TYPE classes AS ENUM ('Blue Pinter Morning' , 'Blue Pinter Afternoon', 'Green Motekar', 'Green Wanter', 'Green Maher', 'Yellow Maher', 'Yellow Motekar', 'Yellow Wanter');
 
 CREATE TABLE teachers (
     username VARCHAR(36) REFERENCES users(username) ON DELETE CASCADE,
