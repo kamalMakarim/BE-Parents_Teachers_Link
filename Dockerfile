@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:18-alpine
 ENV NODE_ENV=production
 ENV TZ="Asia/Jakarta"
 WORKDIR /usr/src/app
