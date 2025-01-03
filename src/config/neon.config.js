@@ -22,9 +22,6 @@ const neonPool = new Pool({
   password: PGPASSWORD,
   host: PGHOST,
   database: PGDATABASE,
-  ssl: {
-    require: true,
-  },
   port: ENDPORT,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,

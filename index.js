@@ -5,6 +5,7 @@ const logRoutes = require("./src/routes/log.routes");
 const studentRoutes = require("./src/routes/student.routes");
 const chatRoutes = require("./src/routes/chat.routes");
 const cors = require("cors");
+const sanitizer = require('perfect-express-sanitizer');
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -30,16 +31,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 //sql injection prevention
-app.use((req, res, next) => {
-  const { query } = req;
-  for (const key in query) {
-    if (typeof query[key] === "string") {
-      query[key] = query[key].replace(/(['";])/g, "");
-    }
-  }
-  next();
-});
-
+app.use(
+  sanitizer.clean({
+      xss: true,
+      noSql: true,
+      sql: true,
+  },
+      only = ["body", "query"],
+      whiteList = ['/auth/offline-login']
+  )
+);
 app.use("/user", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/log", logRoutes);
