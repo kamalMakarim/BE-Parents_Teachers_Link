@@ -56,7 +56,9 @@ exports.getAllStudent = async () => {
 exports.deleteStudent = async (id) => {
   try {
     await neonPool.query(`DELETE FROM students WHERE id = $1`, [id]);
-    await neonPool.query(`DELETE FROM notifications WHERE student_id = $1`, [id]);
+    await neonPool.query(`DELETE FROM notifications WHERE student_id = $1`, [
+      id,
+    ]);
     return { message: "Student deleted" };
   } catch (error) {
     throw new Error(error);
@@ -89,15 +91,26 @@ exports.updateStudent = async (body) => {
   } catch (error) {
     throw new Error(error);
   }
-}
+};
 
-exports.getStudentClass = async (class_name) => {
+exports.getStudentClass = async (class_name, body) => {
   try {
-    const { rows: students } = await neonPool.query(
-      `SELECT * FROM students WHERE class_name = $1`,
-      [class_name]
-    );
-    return students;
+    if (class_name === "Bidang Study TK" || class_name === "Bidang Study SD") {
+      if (!body.class_name) {
+        throw new Error("Class name is required");
+      }
+      const { rows: students } = await neonPool.query(
+        `SELECT * FROM students WHERE class_name = $1`,
+        [body.class_name]
+      );
+      return students;
+    } else {
+      const { rows: students } = await neonPool.query(
+        `SELECT * FROM students WHERE class_name = $1`,
+        [class_name]
+      );
+      return students;
+    }
   } catch (error) {
     throw new Error(error);
   }

@@ -3,19 +3,18 @@ const neonPool = require("../config/neon.config");
 
 exports.createChat = async function (req, res) {
   const { message, studentId } = req.body;
-  console.log(req.body);
   if (!message || !studentId) {
     return {
       message: "All fields are required",
     };
   }
   const writter = req.user.username;
-
   try {
     const chat = new ChatSchema({
       message: message,
       writter: writter,
       studentId: studentId,
+      image: req.body.image || null,
     });
     await chat.save();
 
@@ -36,6 +35,11 @@ exports.getChats = async function (req, res) {
   const { studentId } = req.query;
   try {
     const chats = await ChatSchema.find({studentId: studentId });
+    chats.forEach(chat => {
+      if(chat.image) {
+        chat.image = `${process.env.BASE_URL_IMAGE}/${chat.image}`;
+      }
+    });
     return {
       message: "Chats found",
       data: chats,

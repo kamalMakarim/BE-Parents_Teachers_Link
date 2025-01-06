@@ -39,7 +39,7 @@ exports.getStudentClass = async (req, res) => {
     if (teacher.length === 0) {
       throw new Error("You are not a teacher");
     }
-    let students = await studentServices.getStudentClass(teacher[0].class_name);
+    let students = await studentServices.getStudentClass(teacher[0].class_name, req.query);
 
     students = await Promise.all(
       students.map(async (student) => {

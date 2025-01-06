@@ -19,6 +19,7 @@ exports.createLog = async function (req, res) {
         type,
         writter,
         studentId,
+        image: req.body.image || null,
       });
       await log.save();
     } else {
@@ -43,6 +44,86 @@ exports.createLog = async function (req, res) {
         type,
         writter,
         class_name: class_name[0].class_name,
+        image: req.body.image,
+      });
+      await log.save();
+    }
+    return {
+      message: "Log created",
+    };
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
+exports.createLogBidangStudy = async function (req, res) {
+  const { message, type, studentId, class_name } = req.body;
+  if (!message || !type) {
+    return {
+      message: "All fields are required",
+    };
+  }
+  const writter = req.user.username;
+  try {
+    if (studentId) {
+      const log = new PersonalLogSchema({
+        message,
+        type,
+        writter,
+        studentId,
+      });
+      await log.save();
+    } else {
+      let class_notifcation_update = [];
+      if (class_name === "Bidang Study TK") {
+        class_notifcation_update = [
+          "Blue Pinter Morning",
+          "Blue Pinter Afternoon",
+          "Green Motekar",
+          "Green Wanter",
+          "Green Maher",
+          "Yellow Maher",
+          "Yellow Motekar",
+          "Yellow Wanter",
+        ];
+      } else if (class_name === "Bidang Study SD") {
+        class_notifcation_update = [
+          "Gumujeng",
+          "Someah",
+          "Rancage",
+          "Gentur",
+          "Daria",
+          "Calakan",
+          "Singer",
+          "Rancingeus",
+          "Jatmika",
+          "Gumanti",
+          "Marahmay",
+          "Rucita",
+          "Binangkit",
+          "Gumilang",
+          "Sonagar",
+        ];
+      } else {
+        class_notifcation_update = [class_name];
+      }
+      const { rows: students } = await neonPool.query(
+        `SELECT id FROM students WHERE ${class_notifcation_update.map((_, i) => `class_name = $${i + 1}`).join(' OR ')}`,
+        class_notifcation_update
+      );
+      await Promise.all(
+        students.map(async (student) => {
+          await neonPool.query(
+            `UPDATE notifications SET for_parent = for_parent + 1 WHERE student_id = $1`,
+            [student.id]
+          );
+        })
+      );
+      const log = new ClassLogSchema({
+        message,
+        type,
+        writter,
+        class_name: class_name,
       });
       await log.save();
     }
@@ -97,10 +178,31 @@ exports.getLogOfStudent = async function (req) {
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
+    const bidangStudi = [
+      "Blue Pinter Morning",
+      "Blue Pinter Afternoon",
+      "Green Motekar",
+      "Green Wanter",
+      "Green Maher",
+      "Yellow Maher",
+      "Yellow Motekar",
+      "Yellow Wanter",
+    ].includes(req.body.class_name)
+      ? "Bidang Study TK"
+      : "Bidang Study SD";
     const logs = await Promise.all([
-      ClassLogSchema.find({ class_name: req.body.class_name, timestamp: { $gte: oneMonthAgo } }),
-      PersonalLogSchema.find({ studentId: req.body.id, timestamp: { $gte: oneMonthAgo } }),
-      ChatSchema.find({ studentId: req.body.id, timestamp: { $gte: oneMonthAgo }}),
+      ClassLogSchema.find({
+        class_name: { $in: [req.body.class_name, bidangStudi] },
+        timestamp: { $gte: oneMonthAgo },
+      }),
+      PersonalLogSchema.find({
+        studentId: req.body.id,
+        timestamp: { $gte: oneMonthAgo },
+      }),
+      ChatSchema.find({
+        studentId: req.body.id,
+        timestamp: { $gte: oneMonthAgo },
+      }),
     ]).then(async ([classLogs, personalLogs, chats]) => {
       const combinedLogs = [...classLogs, ...personalLogs, ...chats];
       combinedLogs.sort((a, b) => a.timestamp - b.timestamp);
@@ -130,6 +232,12 @@ exports.getLogOfStudent = async function (req) {
       );
     }
 
+    logs.forEach((log) => {
+      if (log.image) {
+        log.image = `${process.env.BASE_URL_IMAGE}/${log.image}`;
+      }
+    });
+
     return logs;
   } catch (error) {
     throw new Error(error);
@@ -147,4 +255,4 @@ exports.deleteAllLogs = async function () {
   } catch (error) {
     throw new Error(error);
   }
-}
+};

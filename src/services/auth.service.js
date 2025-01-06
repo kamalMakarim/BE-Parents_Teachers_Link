@@ -7,7 +7,7 @@ exports.login = async (body) => {
     const { username, password } = body;
     if (!username) throw new Error("Please provide username");
     if (!password) throw new Error("Please provide password");
-    const { rows: user } = await neonPool.query(
+    let { rows: user } = await neonPool.query(
       `SELECT * FROM users WHERE username = $1`,
       [username]
     );
@@ -22,11 +22,18 @@ exports.login = async (body) => {
       { expiresIn: "3h" }
     );
 
+    if(user[0].role === 'teacher') {
+      const { rows: teacher } = await neonPool.query(
+        `SELECT class_name FROM teachers WHERE username = $1`,
+        [user[0].username]
+      );
+      user[0].class_name = teacher[0].class_name;
+    }
 
     return {
       message: "Login successful",
       token,
-      data: { username: user[0].username, display_name: user[0].display_name, role: user[0].role },
+      data: { username: user[0].username, display_name: user[0].display_name, role: user[0].role, class_name: user[0].class_name },
     };
   } catch (error) {
     return { message: error.message };

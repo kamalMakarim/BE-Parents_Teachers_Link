@@ -41,7 +41,6 @@ exports.addUser = async (body) => {
     if (userExists.length > 0) throw new Error("User already exists");
     if (role == "teacher") {
       if (!body.class_name) throw new Error("Please provide class name");
-      console.log(body.class_name);
       const { rows: teacher } = await neonPool.query(
         `SELECT * FROM teachers WHERE username = $1`,
         [username]
@@ -69,7 +68,6 @@ exports.addUser = async (body) => {
     );
 
     // Add teacher to the teachers table
-    console.log(body.class_name);
     if (role == "teacher") {
       await neonPool.query(
         `INSERT INTO teachers (username, class_name) VALUES ($1, $2)`,

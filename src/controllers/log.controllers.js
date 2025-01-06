@@ -8,6 +8,15 @@ exports.createLog = async (req, res) => {
     }
 }
 
+exports.createLogBidangStudy = async (req, res) => {
+    try {
+        const response = await logServiece.createLogBidangStudy(req, res);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 exports.deleteLog = async (req, res) => {
     try {
         const response = await logServiece.deleteLog(req, res);
