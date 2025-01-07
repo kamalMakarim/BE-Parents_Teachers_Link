@@ -19,7 +19,7 @@ exports.login = async (body) => {
     const token = jwt.sign(
       {role: user[0].role, username: user[0].username},
       process.env.JWT_SECRET,
-      { expiresIn: "3h" }
+      { expiresIn: "1d" }
     );
 
     if(user[0].role === 'teacher') {
