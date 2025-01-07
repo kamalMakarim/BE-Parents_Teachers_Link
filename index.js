@@ -6,6 +6,7 @@ const studentRoutes = require("./src/routes/student.routes");
 const chatRoutes = require("./src/routes/chat.routes");
 const cors = require("cors");
 const sanitizer = require('perfect-express-sanitizer');
+const sanitizerMiddleware = require('./src/middlewares/sanitizer.middleware');
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -30,11 +31,13 @@ app.use(
       xss: true,
       noSql: true,
       sql: true,
+      level:4
     },
     whiteList = [],
     only = ["body", "query"]
   )
 );
+
 app.use("/user", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/log", logRoutes);
