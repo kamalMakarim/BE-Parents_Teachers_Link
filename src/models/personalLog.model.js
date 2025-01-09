@@ -23,6 +23,10 @@ const PersonalLogSchema = new mongoose.Schema({
         enum: ['Delivered', 'Read'],
         default: 'Delivered'
     },
+    images : {
+        type: [String],
+        required: false
+    },
     timestamp: {
         type: Date,
         required: true,

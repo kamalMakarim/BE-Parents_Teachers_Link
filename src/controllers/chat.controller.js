@@ -17,3 +17,12 @@ exports.getChats = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+exports.deleteChat = async (req, res) => {
+    try {
+        const response = await chatService.deleteChat(req, res);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}

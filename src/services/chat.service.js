@@ -48,3 +48,15 @@ exports.getChats = async function (req, res) {
     throw new Error(error);
   }
 };
+
+exports.deleteChat = async function (req, res) {
+  const { chatId } = req.body;
+  try {
+    await ChatSchema.findByIdAndDelete(chatId);
+    return {
+      message: "Chat deleted",
+    };
+  } catch (error) {
+    throw new Error(error);
+  }
+}

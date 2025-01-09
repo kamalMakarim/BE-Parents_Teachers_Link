@@ -12,6 +12,7 @@ exports.createLog = async function (req, res) {
   }
   const writter = req.user.username;
   try {
+    console.log(req.body);
     if (req.body.studentId) {
       const { studentId } = req.body;
       const log = new PersonalLogSchema({
@@ -44,7 +45,7 @@ exports.createLog = async function (req, res) {
         type,
         writter,
         class_name: class_name[0].class_name,
-        image: req.body.image,
+        image: req.body.image || null,
       });
       await log.save();
     }
@@ -234,7 +235,9 @@ exports.getLogOfStudent = async function (req) {
 
     logs.forEach((log) => {
       if (log.image) {
-        log.image = `${process.env.BASE_URL_IMAGE}/${log.image}`;
+        log.image.forEach((image, index) => {
+          log.image[index] = `${process.env.BASE_URL_IMAGE}/${image}`;
+        });
       }
     });
 
