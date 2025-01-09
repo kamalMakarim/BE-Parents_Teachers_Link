@@ -6,7 +6,8 @@ exports.login = async (req, res) => {
         res.cookie('token', response.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 3 * 60 * 60 * 1000, // 3 hours
+            sameSite: 'None',
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
         });
         res.status(200).json(response);
     } catch (error) {
