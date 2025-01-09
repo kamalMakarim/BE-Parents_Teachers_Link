@@ -8,7 +8,7 @@ exports.login = async (body) => {
     if (!username) throw new Error("Please provide username");
     if (!password) throw new Error("Please provide password");
     let { rows: user } = await neonPool.query(
-      `SELECT * FROM users WHERE username = $1`,
+      `SELECT * FROM users WHERE username = $1 LIMIT 1`,
       [username]
     );
     if(user.length === 0) throw new Error("Wrong username or password");
@@ -24,7 +24,7 @@ exports.login = async (body) => {
 
     if(user[0].role === 'teacher') {
       const { rows: teacher } = await neonPool.query(
-        `SELECT class_name FROM teachers WHERE username = $1`,
+        `SELECT class_name FROM teachers WHERE username = $1 LIMIT 1`,
         [user[0].username]
       );
       user[0].class_name = teacher[0].class_name;

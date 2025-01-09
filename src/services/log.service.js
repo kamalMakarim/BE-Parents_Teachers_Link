@@ -2,6 +2,8 @@ const ClassLogSchema = require("../models/classLog.model");
 const PersonalLogSchema = require("../models/personalLog.model");
 const ChatSchema = require("../models/chat.model");
 const neonPool = require("../config/neon.config");
+const { log } = require("winston");
+const { lt } = require("lodash");
 
 exports.createLog = async function (req, res) {
   const { message, type } = req.body;
@@ -12,7 +14,6 @@ exports.createLog = async function (req, res) {
   }
   const writter = req.user.username;
   try {
-    console.log(req.body);
     if (req.body.studentId) {
       const { studentId } = req.body;
       const log = new PersonalLogSchema({
@@ -25,20 +26,17 @@ exports.createLog = async function (req, res) {
       await log.save();
     } else {
       const { rows: class_name } = await neonPool.query(
-        `SELECT class_name FROM teachers WHERE username = $1`,
+        `SELECT class_name FROM teachers WHERE username = $1 LIMIT 1`,
         [writter]
       );
       const { rows: students } = await neonPool.query(
-        `SELECT id FROM students WHERE class_name = $1`,
+        `SELECT id FROM students WHERE class_name = $1 LIMIT 1`,
         [class_name[0].class_name]
       );
-      await Promise.all(
-        students.map(async (student) => {
-          await neonPool.query(
-            `UPDATE notifications SET for_parent = for_parent + 1 WHERE student_id = $1`,
-            [student.id]
-          );
-        })
+      const studentIds = students.map(student => student.id);
+      await neonPool.query(
+        `UPDATE notifications SET for_parent = for_parent + 1 WHERE student_id IN (${studentIds.map((_, i) => `$${i + 1}`).join(', ')})`,
+        studentIds
       );
       const log = new ClassLogSchema({
         message,
@@ -72,6 +70,7 @@ exports.createLogBidangStudy = async function (req, res) {
         type,
         writter,
         studentId,
+        image: req.body.image || null,
       });
       await log.save();
     } else {
@@ -112,19 +111,17 @@ exports.createLogBidangStudy = async function (req, res) {
         `SELECT id FROM students WHERE ${class_notifcation_update.map((_, i) => `class_name = $${i + 1}`).join(' OR ')}`,
         class_notifcation_update
       );
-      await Promise.all(
-        students.map(async (student) => {
-          await neonPool.query(
-            `UPDATE notifications SET for_parent = for_parent + 1 WHERE student_id = $1`,
-            [student.id]
-          );
-        })
+      const studentIds = students.map(student => student.id);
+      await neonPool.query(
+        `UPDATE notifications SET for_parent = for_parent + 1 WHERE student_id IN (${studentIds.map((_, i) => `$${i + 1}`).join(', ')})`,
+        studentIds
       );
       const log = new ClassLogSchema({
         message,
         type,
         writter,
         class_name: class_name,
+        image: req.body.image || null,
       });
       await log.save();
     }
@@ -175,9 +172,23 @@ exports.updateLog = async function (req, res) {
 };
 
 exports.getLogOfStudent = async function (req) {
+  if(!req.query.timestamp) {
+    return {
+      message: "Timestamp is required",
+    };
+  }
   try {
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    // Parse and validate timestamp
+    const timestamp = parseInt(req.query.timestamp);
+    if (isNaN(timestamp)) {
+      return {
+        message: "Invalid timestamp format",
+      };
+    }
+
+    // Calculate the time limit (1 day before the given timestamp)
+    const timeLimit = new Date(timestamp);
+    timeLimit.setDate(timeLimit.getDate() - 7);
 
     const bidangStudi = [
       "Blue Pinter Morning",
@@ -194,24 +205,25 @@ exports.getLogOfStudent = async function (req) {
     const logs = await Promise.all([
       ClassLogSchema.find({
         class_name: { $in: [req.body.class_name, bidangStudi] },
-        timestamp: { $gte: oneMonthAgo },
+        timestamp: { $gte: timeLimit, $lt: timestamp },
       }),
       PersonalLogSchema.find({
         studentId: req.body.id,
-        timestamp: { $gte: oneMonthAgo },
+        timestamp: { $gte: timeLimit, $lt: timestamp },
       }),
       ChatSchema.find({
         studentId: req.body.id,
-        timestamp: { $gte: oneMonthAgo },
+        timestamp: { $gte: timeLimit, $lt: timestamp },
       }),
     ]).then(async ([classLogs, personalLogs, chats]) => {
-      const combinedLogs = [...classLogs, ...personalLogs, ...chats];
+
+      let combinedLogs = [...classLogs, ...personalLogs, ...chats];
       combinedLogs.sort((a, b) => a.timestamp - b.timestamp);
       await Promise.all(
         combinedLogs.map(async (log) => {
-          if (!log.type) {
+          if (log.type == "chat") {
             const { rows: display_name } = await neonPool.query(
-              `SELECT display_name FROM users WHERE username = $1`,
+              `SELECT display_name FROM users WHERE username = $1 LIMIT 1`,
               [log.writter]
             );
             log.writter = display_name[0].display_name;

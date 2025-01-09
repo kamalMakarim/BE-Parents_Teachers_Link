@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 exports.getUser = async (username) => {
   try {
     const { rows: user } = await neonPool.query(
-      `SELECT * FROM users WHERE username = $1`,
+      `SELECT * FROM users WHERE username = $1 LIMIT 1`,
       [username]
     );
     return {
@@ -35,14 +35,14 @@ exports.addUser = async (body) => {
 
     // Check if user already exists in the database
     const { rows: userExists } = await neonPool.query(
-      `SELECT * FROM users WHERE username = $1`,
+      `SELECT * FROM users WHERE username = $1 LIMIT 1`,
       [username]
     );
     if (userExists.length > 0) throw new Error("User already exists");
     if (role == "teacher") {
       if (!body.class_name) throw new Error("Please provide class name");
       const { rows: teacher } = await neonPool.query(
-        `SELECT * FROM teachers WHERE username = $1`,
+        `SELECT * FROM teachers WHERE username = $1 LIMIT 1`,
         [username]
       );
       if (teacher.length > 0) throw new Error("Teacher already exists");
@@ -110,7 +110,7 @@ exports.deleteUser = async (username) => {
   try {
     // Check if user exists in the database
     const { rows: userExists } = await neonPool.query(
-      `SELECT * FROM users WHERE username = $1`,
+      `SELECT * FROM users WHERE username = $1 LIMIT 1`,
       [username]
     );
     if (userExists.length === 0) throw new Error("User does not exist");
@@ -137,7 +137,7 @@ exports.updatePasswordByAdmin = async (body) => {
 
     // Check if user exists in the database
     const { rows: userExists } = await neonPool.query(
-      `SELECT * FROM users WHERE username = $1`,
+      `SELECT * FROM users WHERE username = $1 LIMIT 1`,
       [username]
     );
     if (userExists.length === 0) throw new Error("User does not exist");
@@ -190,13 +190,13 @@ exports.getAllUsers = async () => {
       users.map(async (user) => {
         if (user.role == "teacher") {
           const { rows: teacher } = await neonPool.query(
-            `SELECT * FROM teachers WHERE username = $1`,
+            `SELECT * FROM teachers WHERE username = $1 LIMIT 1`,
             [user.username]
           );
           user.class_name = teacher[0].class_name;
         }else if (user.role == "parent") {
           const { rows: students } = await neonPool.query(
-            `SELECT * FROM students WHERE parent_username = $1`,
+            `SELECT * FROM students WHERE parent_username = $1 LIMIT 1`,
             [user.username]
           );
           user.students = students;

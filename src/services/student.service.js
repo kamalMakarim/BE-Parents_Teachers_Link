@@ -10,7 +10,7 @@ exports.addStudent = async (body) => {
 
     // Check if parent exists
     const { rows: parent } = await neonPool.query(
-      `SELECT * FROM users WHERE username = $1`,
+      `SELECT * FROM users WHERE username = $1 LIMIT 1`,
       [parent_username]
     );
     if (parent.length === 0) {
@@ -75,7 +75,7 @@ exports.updateStudent = async (body) => {
 
     // Check if parent exists
     const { rows: parent } = await neonPool.query(
-      `SELECT * FROM users WHERE username = $1`,
+      `SELECT * FROM users WHERE username = $1 LIMIT 1`,
       [parent_username]
     );
     if (parent.length === 0) {

@@ -17,13 +17,7 @@ const PersonalLogSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    status:{
-        type: String,
-        required: true,
-        enum: ['Delivered', 'Read'],
-        default: 'Delivered'
-    },
-    images : {
+    image : {
         type: [String],
         required: false
     },

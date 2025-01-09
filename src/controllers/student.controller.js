@@ -13,16 +13,21 @@ exports.getStudentsOfParent = async (req, res) => {
   try {
     let students = await studentServices.getStudentsOfParent(req.user.username);
 
-    students = await Promise.all(
-      students.map(async (student) => {
-        const { rows: notifications } = await neonPool.query(
-          `SELECT * FROM notifications WHERE student_id = $1`,
-          [student.id]
-        );
-        student.notification = notifications[0].for_parent;
-        return student;
-      })
+    const studentIds = students.map(student => student.id);
+    const { rows: notifications } = await neonPool.query(
+      `SELECT student_id, for_parent FROM notifications WHERE student_id IN (${studentIds.map((_, i) => `$${i + 1}`).join(', ')})`,
+      studentIds
     );
+
+    const notificationMap = notifications.reduce((acc, notification) => {
+      acc[notification.student_id] = notification.for_parent;
+      return acc;
+    }, {});
+
+    students = students.map(student => {
+      student.notification = notificationMap[student.id] || null;
+      return student;
+    });
 
     res.status(200).json(students);
   } catch (error) {
@@ -33,7 +38,7 @@ exports.getStudentsOfParent = async (req, res) => {
 exports.getStudentClass = async (req, res) => {
   try {
     const { rows: teacher } = await neonPool.query(
-      `SELECT * FROM teachers WHERE username = $1`,
+      `SELECT * FROM teachers WHERE username = $1 LIMIT 1`,
       [req.user.username]
     );
     if (teacher.length === 0) {
@@ -41,16 +46,21 @@ exports.getStudentClass = async (req, res) => {
     }
     let students = await studentServices.getStudentClass(teacher[0].class_name, req.query);
 
-    students = await Promise.all(
-      students.map(async (student) => {
-        const { rows: notifications } = await neonPool.query(
-          `SELECT * FROM notifications WHERE student_id = $1`,
-          [student.id]
-        );
-        student.notification = notifications[0].for_teacher;
-        return student;
-      })
+    const studentIds = students.map(student => student.id);
+    const { rows: notifications } = await neonPool.query(
+      `SELECT student_id, for_teacher FROM notifications WHERE student_id IN (${studentIds.map((_, i) => `$${i + 1}`).join(', ')})`,
+      studentIds
     );
+
+    const notificationMap = notifications.reduce((acc, notification) => {
+      acc[notification.student_id] = notification.for_teacher;
+      return acc;
+    }, {});
+
+    students = students.map(student => {
+      student.notification = notificationMap[student.id] || null;
+      return student;
+    });
 
     res.status(200).json(students);
   } catch (error) {
