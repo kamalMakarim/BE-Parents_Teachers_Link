@@ -33,7 +33,7 @@ exports.login = async (body) => {
     return {
       message: "Login successful",
       token,
-      data: { username: user[0].username, display_name: user[0].display_name, role: user[0].role, class_name: user[0].class_name },
+      data: { username: user[0].username, display_name: user[0].display_name, role: user[0].role, class_name: user[0].class_name || null },
     };
   } catch (error) {
     return { message: error.message };

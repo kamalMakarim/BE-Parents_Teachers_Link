@@ -8,8 +8,10 @@ exports.authenticate = async (req, res, next) => {
         req.user = {};
         req.user.role = decoded.role;
         req.user.username = decoded.username;
+        console.log(req.user);
         next();
     } catch (error) {
+        console.log(error);
         res.status(401).json({ message: error.message });
     }
 }
