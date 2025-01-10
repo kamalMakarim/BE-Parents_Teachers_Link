@@ -19,6 +19,7 @@ const corsOptions = {
   exposedHeaders: ["Set-Cookie"],
   
 };
+console.log(process.env.FRONTEND_URL);
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
