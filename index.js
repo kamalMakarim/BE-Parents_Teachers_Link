@@ -20,6 +20,7 @@ const corsOptions = {
   
 };
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 require("./src/config/monggo.config").connectDB();
 app.use(express.json());
