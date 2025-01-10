@@ -5,8 +5,8 @@ const logRoutes = require("./src/routes/log.routes");
 const studentRoutes = require("./src/routes/student.routes");
 const chatRoutes = require("./src/routes/chat.routes");
 const cors = require("cors");
-const sanitizer = require('perfect-express-sanitizer');
-const sanitizerMiddleware = require('./src/middlewares/sanitizer.middleware');
+const sanitizer = require("perfect-express-sanitizer");
+const sanitizerMiddleware = require("./src/middlewares/sanitizer.middleware");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -17,11 +17,15 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
   exposedHeaders: ["Set-Cookie"],
-  
 };
 
+app.use((req, res, next) => {
+  console.log(req.headers);
+  next();
+});
+
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 require("./src/config/monggo.config").connectDB();
 app.use(express.json());
@@ -34,10 +38,10 @@ app.use(
       xss: true,
       noSql: true,
       sql: true,
-      level:4
+      level: 4,
     },
-    whiteList = [],
-    only = ["body", "query"]
+    (whiteList = []),
+    (only = ["body", "query"])
   )
 );
 
