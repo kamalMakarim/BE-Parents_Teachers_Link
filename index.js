@@ -20,12 +20,13 @@ const corsOptions = {
   
 };
 console.log(process.env.FRONTEND_URL);
-app.use(cors(corsOptions));
 app.use((req, res, next) => {
   console.log('Origin:', req.headers.origin);
   console.log('Method:', req.method);
   next();
 });
+app.use(cors(corsOptions));
+
 
 app.options('*', cors(corsOptions));
 
