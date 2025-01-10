@@ -12,22 +12,15 @@ const port = process.env.PORT || 5000;
 
 const app = express();
 const corsOptions = {
-  origin: process.env.FRONTEND_URL,
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
   exposedHeaders: ["Set-Cookie"],
   
 };
-console.log(process.env.FRONTEND_URL);
-app.use((req, res, next) => {
-  console.log('Origin:', req.headers.origin);
-  console.log('Method:', req.method);
-  next();
-});
+
 app.use(cors(corsOptions));
-
-
 app.options('*', cors(corsOptions));
 
 require("./src/config/monggo.config").connectDB();
