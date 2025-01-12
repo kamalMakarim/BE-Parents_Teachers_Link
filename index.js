@@ -10,6 +10,7 @@ const sanitizerMiddleware = require("./src/middlewares/sanitizer.middleware");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
+
 const app = express();
 const corsOptions = {
   origin: process.env.FRONTEND_URL,
@@ -18,12 +19,6 @@ const corsOptions = {
   credentials: true,
   exposedHeaders: ["Set-Cookie"],
 };
-
-app.use((req, res, next) => {
-  console.log(req.headers);
-  next();
-});
-
 app.use(cors(corsOptions));
 
 require("./src/config/monggo.config").connectDB();

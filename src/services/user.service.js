@@ -182,28 +182,31 @@ exports.updateDisplayName = async (req, body) => {
 
 exports.getAllUsers = async () => {
   try {
-    const { rows: users } = await neonPool.query(`SELECT * FROM users`);
+    const query = `
+  SELECT 
+    u.*, 
+    CASE 
+      WHEN u.role = 'teacher' THEN t.class_name
+      ELSE NULL
+    END AS class_name,
+    CASE 
+      WHEN u.role = 'parent' THEN (
+        SELECT json_agg(s) 
+        FROM students s 
+        WHERE s.parent_username = u.username
+      )
+      ELSE NULL
+    END AS students
+  FROM users u
+  LEFT JOIN teachers t ON t.username = u.username AND u.role = 'teacher'
+`;
+
+    const { rows: users } = await neonPool.query(query);
+
+    // Remove sensitive information (like password) after the query
     users.forEach((user) => {
       user.password = undefined;
     });
-    await Promise.all(
-      users.map(async (user) => {
-        if (user.role == "teacher") {
-          const { rows: teacher } = await neonPool.query(
-            `SELECT * FROM teachers WHERE username = $1 LIMIT 1`,
-            [user.username]
-          );
-          user.class_name = teacher[0].class_name;
-        }else if (user.role == "parent") {
-          const { rows: students } = await neonPool.query(
-            `SELECT * FROM students WHERE parent_username = $1 LIMIT 1`,
-            [user.username]
-          );
-          user.students = students;
-        }
-        return user;
-      })
-    );
     return users;
   } catch (error) {
     throw new Error(error);

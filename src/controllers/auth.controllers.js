@@ -4,10 +4,10 @@ exports.login = async (req, res) => {
     try {
         const response = await authServices.login(req.body);
         res.cookie('token', response.token, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            domain: '.sekolahbinekas.com',
+            httpOnly: process.env.NODE_ENV === 'production',
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            domain: process.env.NODE_ENV === 'production' ? '.sekolahbinekas.com' : 'localhost',
             maxAge: 24 * 60 * 60 * 1000, // 1 day
         });
         console.log(response);
