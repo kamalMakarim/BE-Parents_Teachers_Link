@@ -219,17 +219,27 @@ exports.getLogOfStudent = async function (req) {
 
       let combinedLogs = [...classLogs, ...personalLogs, ...chats];
       combinedLogs.sort((a, b) => a.timestamp - b.timestamp);
-      await Promise.all(
-        combinedLogs.map(async (log) => {
-          if (log.type == "chat") {
-            const { rows: display_name } = await neonPool.query(
-              `SELECT display_name FROM users WHERE username = $1 LIMIT 1`,
-              [log.writter]
-            );
-            log.writter = display_name[0].display_name;
+      const writterUsernames = combinedLogs
+        .filter(log => log.type === "chat")
+        .map(log => log.writter);
+
+      if (writterUsernames.length > 0) {
+        const { rows: displayNames } = await neonPool.query(
+          `SELECT username, display_name FROM users WHERE username IN (${writterUsernames.map((_, i) => `$${i + 1}`).join(', ')})`,
+          writterUsernames
+        );
+
+        const displayNameMap = displayNames.reduce((acc, { username, display_name }) => {
+          acc[username] = display_name;
+          return acc;
+        }, {});
+
+        combinedLogs.forEach(log => {
+          if (log.type === "chat") {
+        log.writter = displayNameMap[log.writter] || log.writter;
           }
-        })
-      );
+        });
+      }
       return combinedLogs;
     });
 
