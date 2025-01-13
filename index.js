@@ -7,6 +7,8 @@ const chatRoutes = require("./src/routes/chat.routes");
 const cors = require("cors");
 const sanitizer = require("perfect-express-sanitizer");
 const sanitizerMiddleware = require("./src/middlewares/sanitizer.middleware");
+const bodyParser = require('body-parser');
+const fs = require('fs');
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -38,6 +40,28 @@ app.use(
     (only = ["body", "query"])
   )
 );
+
+//logger
+app.use(bodyParser.json());
+app.use((req, res, next) => {
+  const oldSend = res.send; // Save original res.send
+
+  res.send = function (data) {
+    try {
+      // Log the response status and data.message if present
+      const logData = {
+        statusCode: res.statusCode,
+        message: JSON.parse(data).message || 'No message',
+      };
+      console.log(`[${logData.statusCode}]${req.method} ${req.originalUrl} Message: ${logData.message}`);
+    } catch (error) {
+      console.error('Error parsing response data for logging', error);
+    }
+    oldSend.apply(res, arguments); // Call the original res.send
+  };
+
+  next();
+});
 
 app.use("/user", userRoutes);
 app.use("/auth", authRoutes);

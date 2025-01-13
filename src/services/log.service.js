@@ -33,9 +33,11 @@ exports.createLog = async function (req, res) {
         `SELECT id FROM students WHERE class_name = $1 LIMIT 1`,
         [class_name[0].class_name]
       );
-      const studentIds = students.map(student => student.id);
+      const studentIds = students.map((student) => student.id);
       await neonPool.query(
-        `UPDATE notifications SET for_parent = for_parent + 1 WHERE student_id IN (${studentIds.map((_, i) => `$${i + 1}`).join(', ')})`,
+        `UPDATE notifications SET for_parent = for_parent + 1 WHERE student_id IN (${studentIds
+          .map((_, i) => `$${i + 1}`)
+          .join(", ")})`,
         studentIds
       );
       const log = new ClassLogSchema({
@@ -108,12 +110,16 @@ exports.createLogBidangStudy = async function (req, res) {
         class_notifcation_update = [class_name];
       }
       const { rows: students } = await neonPool.query(
-        `SELECT id FROM students WHERE ${class_notifcation_update.map((_, i) => `class_name = $${i + 1}`).join(' OR ')}`,
+        `SELECT id FROM students WHERE ${class_notifcation_update
+          .map((_, i) => `class_name = $${i + 1}`)
+          .join(" OR ")}`,
         class_notifcation_update
       );
-      const studentIds = students.map(student => student.id);
+      const studentIds = students.map((student) => student.id);
       await neonPool.query(
-        `UPDATE notifications SET for_parent = for_parent + 1 WHERE student_id IN (${studentIds.map((_, i) => `$${i + 1}`).join(', ')})`,
+        `UPDATE notifications SET for_parent = for_parent + 1 WHERE student_id IN (${studentIds
+          .map((_, i) => `$${i + 1}`)
+          .join(", ")})`,
         studentIds
       );
       const log = new ClassLogSchema({
@@ -172,7 +178,7 @@ exports.updateLog = async function (req, res) {
 };
 
 exports.getLogOfStudent = async function (req) {
-  if(!req.query.timestamp) {
+  if (!req.query.timestamp) {
     return {
       message: "Timestamp is required",
     };
@@ -202,46 +208,56 @@ exports.getLogOfStudent = async function (req) {
     ].includes(req.body.class_name)
       ? "Bidang Study TK"
       : "Bidang Study SD";
-    const logs = await Promise.all([
-      ClassLogSchema.find({
-        class_name: { $in: [req.body.class_name, bidangStudi] },
-        timestamp: { $gte: timeLimit, $lt: timestamp },
-      }),
-      PersonalLogSchema.find({
-        studentId: req.body.id,
-        timestamp: { $gte: timeLimit, $lt: timestamp },
-      }),
-      ChatSchema.find({
-        studentId: req.body.id,
-        timestamp: { $gte: timeLimit, $lt: timestamp },
-      }),
-    ]).then(async ([classLogs, personalLogs, chats]) => {
 
-      let combinedLogs = [...classLogs, ...personalLogs, ...chats];
-      combinedLogs.sort((a, b) => a.timestamp - b.timestamp);
-      const writterUsernames = combinedLogs
-        .filter(log => log.type === "chat")
-        .map(log => log.writter);
+    // Fetch the data sequentially
+    const classLogs = await ClassLogSchema.find({
+      class_name: { $in: [req.body.class_name, bidangStudi] },
+      timestamp: { $gte: timeLimit, $lt: timestamp },
+    });
 
-      if (writterUsernames.length > 0) {
-        const { rows: displayNames } = await neonPool.query(
-          `SELECT username, display_name FROM users WHERE username IN (${writterUsernames.map((_, i) => `$${i + 1}`).join(', ')})`,
-          writterUsernames
-        );
+    const personalLogs = await PersonalLogSchema.find({
+      studentId: req.body.id,
+      timestamp: { $gte: timeLimit, $lt: timestamp },
+    });
 
-        const displayNameMap = displayNames.reduce((acc, { username, display_name }) => {
+    const chats = await ChatSchema.find({
+      studentId: req.body.id,
+      timestamp: { $gte: timeLimit, $lt: timestamp },
+    });
+
+    // Combine the logs
+    let combinedLogs = [...classLogs, ...personalLogs, ...chats];
+    combinedLogs.sort((a, b) => a.timestamp - b.timestamp);
+
+    const writterUsernames = combinedLogs
+      .filter((log) => log.type === "chat")
+      .map((log) => log.writter);
+
+    if (writterUsernames.length > 0) {
+      // Fetch display names for writers
+      const { rows: displayNames } = await neonPool.query(
+        `SELECT username, display_name FROM users WHERE username IN (${writterUsernames
+          .map((_, i) => `$${i + 1}`)
+          .join(", ")})`,
+        writterUsernames
+      );
+
+      // Create a mapping of usernames to display names
+      const displayNameMap = displayNames.reduce(
+        (acc, { username, display_name }) => {
           acc[username] = display_name;
           return acc;
-        }, {});
+        },
+        {}
+      );
 
-        combinedLogs.forEach(log => {
-          if (log.type === "chat") {
-        log.writter = displayNameMap[log.writter] || log.writter;
-          }
-        });
-      }
-      return combinedLogs;
-    });
+      // Update the logs with display names
+      combinedLogs.forEach((log) => {
+        if (log.type === "chat") {
+          log.writter = displayNameMap[log.writter] || log.writter;
+        }
+      });
+    }
 
     if (req.user.role === "teacher") {
       await neonPool.query(
@@ -255,7 +271,7 @@ exports.getLogOfStudent = async function (req) {
       );
     }
 
-    logs.forEach((log) => {
+    combinedLogs.forEach((log) => {
       if (log.image) {
         log.image.forEach((image, index) => {
           log.image[index] = `${process.env.BASE_URL_IMAGE}/${image}`;
@@ -263,7 +279,7 @@ exports.getLogOfStudent = async function (req) {
       }
     });
 
-    return logs;
+    return combinedLogs;
   } catch (error) {
     throw new Error(error);
   }

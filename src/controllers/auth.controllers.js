@@ -10,7 +10,6 @@ exports.login = async (req, res) => {
             domain: process.env.NODE_ENV === 'production' ? '.sekolahbinekas.com' : 'localhost',
             maxAge: 24 * 60 * 60 * 1000, // 1 day
         });
-        console.log(response);
         res.status(200).json(response);
     } catch (error) {
         res.status(500).json({ message: error.message });

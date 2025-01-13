@@ -49,16 +49,12 @@ exports.addUser = async (body) => {
     }
 
     // Check if username and password are valid
-    const usernameRegex = /^[a-zA-Z0-9_.-]{3,20}$/;
-    const passwordRegex = /^(?=.*[a-z])(?=.*\d)[a-zA-Z\d]{8,20}$/;
+    const usernameRegex = /^.{8,}$/;
+    const passwordRegex = /^.{8,}$/;
     if (!usernameRegex.test(username))
-      throw new Error(
-        `Usernnme must be alphanumeric and can contain ".", "_", "-"`
-      );
+      throw new Error("Username must be at least 8 characters long");
     if (!passwordRegex.test(password))
-      throw new Error(
-        "Password must contain at least 8 characters, 1 lowercase letter and 1 number"
-      );
+      throw new Error("Password must be at least 8 characters long");
 
     // Hash password and add user to the database
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -88,11 +84,10 @@ exports.updatePasswordByUser = async (req, res) => {
   try {
     // Validate request
     if (!new_password) throw new Error("Please provide new password");
-    const passwordRegex = /^(?=.*[a-z])(?=.*\d)[a-zA-Z\d]{8,20}$/;
+    const passwordRegex = /^.{8,}$/;
     if (!passwordRegex.test(new_password))
-      throw new Error(
-        "Password must contain at least 8 characters and 20 characters max, 1 lowercase letter and 1 number"
-      );
+      throw new Error("Password must be at least 8 characters long");
+
     const username = req.user.username;
     // Hash password and update user in the database
     const hashedPassword = await bcrypt.hash(new_password, 10);
@@ -129,11 +124,9 @@ exports.updatePasswordByAdmin = async (body) => {
     // Validate request
     if (!username) throw new Error("Please provide username");
     if (!new_password) throw new Error("Please provide new password");
-    const passwordRegex = /^(?=.*[a-z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+    const passwordRegex = /^.{8,}$/;
     if (!passwordRegex.test(new_password))
-      throw new Error(
-        "Password must contain at least 8 characters, 1 lowercase letter and 1 number"
-      );
+      throw new Error("Password must be at least 8 characters long");
 
     // Check if user exists in the database
     const { rows: userExists } = await neonPool.query(
