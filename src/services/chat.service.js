@@ -35,7 +35,7 @@ exports.createChat = async function (req, res) {
     );
     chat.writter = display_name[0].display_name;
     chat.type = "chat";
-    if(chat.image.length > 0){
+    if(chat.image?.length > 0){
       chat.image = chat.image.map((image) => {
         return `${process.env.BASE_URL_IMAGE}/${image}`;
       });
