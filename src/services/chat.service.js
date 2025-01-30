@@ -3,9 +3,9 @@ const neonPool = require("../config/neon.config");
 
 exports.createChat = async function (req, res) {
   const { message, studentId } = req.body;
-  if (!message || !studentId) {
+  if (!studentId) {
     return {
-      message: "All fields are required",
+      message: "Student ID is required",
     };
   }
   const writter = req.user.username;
