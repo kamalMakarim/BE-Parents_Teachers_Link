@@ -34,7 +34,7 @@ app.use(
       xss: true,
       noSql: true,
       sql: true,
-      level: 4,
+      level: 3,
     },
     (whiteList = []),
     (only = ["body", "query"])
