@@ -194,7 +194,7 @@ exports.getLogOfStudent = async function (req) {
 
     // Calculate the time limit (1 day before the given timestamp)
     const timeLimit = new Date(timestamp);
-    timeLimit.setDate(timeLimit.getDate() - 45);
+    timeLimit.setDate(timeLimit.getDate() - 60);
 
     const bidangStudi = [
       "Blue Pinter Morning",
