@@ -36,7 +36,7 @@ exports.updateLog = async (req, res) => {
 }
 
 exports.getLogOfStudent = async (req, res) => {
-    if(!req.body.id) {
+    if(!req.body.body.id) {
         res.status(400).json({ message: "Please provide student id" });
     }
     const student  = req.body;
