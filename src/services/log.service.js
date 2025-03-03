@@ -219,7 +219,7 @@ exports.getLogOfStudent = async function (req) {
       classLogs = await ClassLogSchema.find({
       class_name: { $in: [req.body.class_name, bidangStudi] },
       timestamp: {$lt: timestamp },
-      }).limit(1);
+      }).sort({ timestamp: -1 }).limit(1);
     }
 
     let personalLogs = await PersonalLogSchema.find({
@@ -231,7 +231,7 @@ exports.getLogOfStudent = async function (req) {
       personalLogs = await PersonalLogSchema.find({
       studentId: req.body.id,
       timestamp: {$lt: timestamp },
-      }).sort({ timestamp: 1 }).limit(1);
+      }).sort({ timestamp: -1 }).limit(1);
     }
 
     let chats = await ChatSchema.find({
