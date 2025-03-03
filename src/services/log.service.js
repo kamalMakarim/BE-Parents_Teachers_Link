@@ -194,7 +194,7 @@ exports.getLogOfStudent = async function (req) {
 
     // Calculate the time limit (1 day before the given timestamp)
     const timeLimit = new Date(timestamp);
-    timeLimit.setDate(timeLimit.getDate() - 14);
+    timeLimit.setDate(timeLimit.getDate() - 5);
 
     const bidangStudi = [
       "Blue Pinter Morning",
@@ -210,17 +210,29 @@ exports.getLogOfStudent = async function (req) {
       : "Bidang Study SD";
 
     // Fetch the data sequentially
-    const classLogs = await ClassLogSchema.find({
+    let classLogs = await ClassLogSchema.find({
       class_name: { $in: [req.body.class_name, bidangStudi] },
       timestamp: { $gte: timeLimit, $lt: timestamp },
     });
 
-    const personalLogs = await PersonalLogSchema.find({
+    if (classLogs.length === 0) {
+      classLogs = await ClassLogSchema.find({
+      class_name: { $in: [req.body.class_name, bidangStudi] },
+      }).sort({ timestamp: 1 }).limit(1);
+    }
+
+    let personalLogs = await PersonalLogSchema.find({
       studentId: req.body.id,
       timestamp: { $gte: timeLimit, $lt: timestamp },
     });
 
-    const chats = await ChatSchema.find({
+    if (personalLogs.length === 0) {
+      personalLogs = await PersonalLogSchema.find({
+      studentId: req.body.id,
+      }).sort({ timestamp: 1 }).limit(1);
+    }
+
+    let chats = await ChatSchema.find({
       studentId: req.body.id,
       timestamp: { $gte: timeLimit, $lt: timestamp },
     });
