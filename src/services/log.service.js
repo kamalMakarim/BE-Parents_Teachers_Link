@@ -218,6 +218,7 @@ exports.getLogOfStudent = async function (req) {
     if (classLogs.length === 0) {
       classLogs = await ClassLogSchema.find({
       class_name: { $in: [req.body.class_name, bidangStudi] },
+      timestamp: {$lt: timestamp },
       }).sort({ timestamp: 1 }).limit(1);
     }
 
@@ -229,6 +230,7 @@ exports.getLogOfStudent = async function (req) {
     if (personalLogs.length === 0) {
       personalLogs = await PersonalLogSchema.find({
       studentId: req.body.id,
+      timestamp: {$lt: timestamp },
       }).sort({ timestamp: 1 }).limit(1);
     }
 
