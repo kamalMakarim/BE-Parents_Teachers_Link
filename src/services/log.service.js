@@ -194,7 +194,7 @@ exports.getLogOfStudent = async function (req) {
 
     // Calculate the time limit (1 day before the given timestamp)
     const timeLimit = new Date(timestamp);
-    timeLimit.setDate(timeLimit.getDate() - 3);
+    timeLimit.setDate(timeLimit.getDate() - 10);
 
     const bidangStudi = [
       "Blue Pinter Morning",
@@ -219,7 +219,7 @@ exports.getLogOfStudent = async function (req) {
       classLogs = await ClassLogSchema.find({
       class_name: { $in: [req.body.class_name, bidangStudi] },
       timestamp: {$lt: timestamp },
-      }).sort({ timestamp: 1 }).limit(1);
+      }).limit(1);
     }
 
     let personalLogs = await PersonalLogSchema.find({
