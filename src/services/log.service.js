@@ -239,6 +239,13 @@ exports.getLogOfStudent = async function (req) {
       timestamp: { $gte: timeLimit, $lt: timestamp },
     });
 
+    if(chats.length === 0) {
+      chats = await ChatSchema.find({
+        studentId: req.body.id,
+        timestamp: {$lt: timestamp },
+      }).sort({ timestamp: -1 }).limit(1);
+    }
+
     // Combine the logs
     let combinedLogs = [...classLogs, ...personalLogs, ...chats];
     combinedLogs.sort((a, b) => a.timestamp - b.timestamp);
