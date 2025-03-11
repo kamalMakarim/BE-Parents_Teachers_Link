@@ -47,7 +47,6 @@ const connectWithRetry = () => {
 
 const query = async (text, params) => {
   neonPool.connect();
-  const start = Date.now();
   try {
     const res = await neonPool.query(text, params);
     // const duration = Date.now() - start;
