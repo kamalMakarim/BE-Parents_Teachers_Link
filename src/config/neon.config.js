@@ -45,9 +45,8 @@ const connectWithRetry = () => {
     });
 };
 
-connectWithRetry();
-
 const query = async (text, params) => {
+  neonPool.connect();
   const start = Date.now();
   try {
     const res = await neonPool.query(text, params);
@@ -63,6 +62,8 @@ const query = async (text, params) => {
     //logger.error("Query error", { text, params, error });
     console.log("Query error", { text, params, error});
     throw error;
+  }finally{
+    neonPool.release();
   }
 };
 
