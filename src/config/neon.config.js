@@ -30,25 +30,16 @@ const connectWithRetry = () => {
       setTimeout(connectWithRetry, 5000); 
     });
 };
-
 const query = async (text, params) => {
-  neonPool.connect();
+  const client = await neonPool.connect();
   try {
-    const res = await neonPool.query(text, params);
-    // const duration = Date.now() - start;
-    // logger.info("Executed query", {
-    //   text,
-    //   params,
-    //   duration,
-    //   rows: res.rowCount,
-    // });
+    const res = await client.query(text, params);
     return res;
   } catch (error) {
-    //logger.error("Query error", { text, params, error });
-    console.log("Query error", { text, params, error});
+    console.log("Query error", { text, params, error });
     throw error;
-  }finally{
-    neonPool.end();
+  } finally {
+    client.release();
   }
 };
 
