@@ -184,7 +184,7 @@ exports.getLogOfStudent = async function (req) {
     };
   }
   try {
-    // Parse and validate timestamp
+    // Parse and validate timestamp from the frontend (cursor for pagination)
     const timestamp = parseInt(req.query.timestamp);
     if (isNaN(timestamp)) {
       return {
@@ -192,10 +192,10 @@ exports.getLogOfStudent = async function (req) {
       };
     }
 
-    // Calculate the time limit (1 day before the given timestamp)
-    const timeLimit = new Date(timestamp);
-    timeLimit.setDate(timeLimit.getDate() - 3);
+    // Set your pagination limit
+    const pageSize = 20;
 
+    // Determine the additional class name for certain classes
     const bidangStudi = [
       "Blue Pinter Morning",
       "Blue Pinter Afternoon",
@@ -209,53 +209,76 @@ exports.getLogOfStudent = async function (req) {
       ? "Bidang Study TK"
       : "Bidang Study SD";
 
-    // Fetch the data sequentially
-    let classLogs = await ClassLogSchema.find({
+    // Query each collection for logs older than the provided timestamp.
+    // We sort descending so that the newest logs just before the cursor come first.
+    const classLogsPromise = ClassLogSchema.find({
       class_name: { $in: [req.body.class_name, bidangStudi] },
-      timestamp: { $gte: timeLimit, $lt: timestamp },
-    });
+      timestamp: { $lt: timestamp },
+    })
+      .sort({ timestamp: -1 })
+      .limit(pageSize)
+      .exec();
 
-    if (classLogs.length === 0) {
-      classLogs = await ClassLogSchema.find({
-      class_name: { $in: [req.body.class_name, bidangStudi] },
-      timestamp: {$lt: timestamp },
-      }).sort({ timestamp: -1 }).limit(1);
-    }
-
-    let personalLogs = await PersonalLogSchema.find({
+    const personalLogsPromise = PersonalLogSchema.find({
       studentId: req.body.id,
-      timestamp: { $gte: timeLimit, $lt: timestamp },
-    });
+      timestamp: { $lt: timestamp },
+    })
+      .sort({ timestamp: -1 })
+      .limit(pageSize)
+      .exec();
 
-    if (personalLogs.length === 0) {
-      personalLogs = await PersonalLogSchema.find({
+    const chatsPromise = ChatSchema.find({
       studentId: req.body.id,
-      timestamp: {$lt: timestamp },
-      }).sort({ timestamp: -1 }).limit(1);
-    }
+      timestamp: { $lt: timestamp },
+    })
+      .sort({ timestamp: -1 })
+      .limit(pageSize)
+      .exec();
 
-    let chats = await ChatSchema.find({
-      studentId: req.body.id,
-      timestamp: { $gte: timeLimit, $lt: timestamp },
-    });
+    // Execute all queries in parallel
+    const [classLogs, personalLogs, chats] = await Promise.all([
+      classLogsPromise,
+      personalLogsPromise,
+      chatsPromise,
+    ]);
 
-    if(chats.length === 0) {
-      chats = await ChatSchema.find({
-        studentId: req.body.id,
-        timestamp: {$lt: timestamp },
-      }).sort({ timestamp: -1 }).limit(1);
-    }
-
-    // Combine the logs
+    // Combine the results from all sources and sort them descending by timestamp
     let combinedLogs = [...classLogs, ...personalLogs, ...chats];
-    combinedLogs.sort((a, b) => a.timestamp - b.timestamp);
+    combinedLogs.sort((a, b) => b.timestamp - a.timestamp);
 
-    const writterUsernames = combinedLogs
+    // Slice the first pageSize logs from the combined results
+    let paginatedLogs = combinedLogs.slice(0, pageSize);
+
+    // If no logs were found, as a fallback return one log per collection (if available)
+    if (paginatedLogs.length === 0) {
+      const fallbackClassLogs = await ClassLogSchema.find({
+        class_name: { $in: [req.body.class_name, bidangStudi] },
+        timestamp: { $lt: timestamp },
+      })
+        .sort({ timestamp: -1 })
+        .limit(1);
+      const fallbackPersonalLogs = await PersonalLogSchema.find({
+        studentId: req.body.id,
+        timestamp: { $lt: timestamp },
+      })
+        .sort({ timestamp: -1 })
+        .limit(1);
+      const fallbackChats = await ChatSchema.find({
+        studentId: req.body.id,
+        timestamp: { $lt: timestamp },
+      })
+        .sort({ timestamp: -1 })
+        .limit(1);
+      combinedLogs = [...fallbackClassLogs, ...fallbackPersonalLogs, ...fallbackChats];
+      combinedLogs.sort((a, b) => b.timestamp - a.timestamp);
+      paginatedLogs = combinedLogs.slice(0, 1);
+    }
+
+    // For logs of type "chat", update the writter to display name
+    const writterUsernames = paginatedLogs
       .filter((log) => log.type === "chat")
       .map((log) => log.writter);
-
     if (writterUsernames.length > 0) {
-      // Fetch display names for writers
       const { rows: displayNames } = await neonPool.query(
         `SELECT username, display_name FROM users WHERE username IN (${writterUsernames
           .map((_, i) => `$${i + 1}`)
@@ -263,23 +286,19 @@ exports.getLogOfStudent = async function (req) {
         writterUsernames
       );
 
-      // Create a mapping of usernames to display names
-      const displayNameMap = displayNames.reduce(
-        (acc, { username, display_name }) => {
-          acc[username] = display_name;
-          return acc;
-        },
-        {}
-      );
+      const displayNameMap = displayNames.reduce((acc, { username, display_name }) => {
+        acc[username] = display_name;
+        return acc;
+      }, {});
 
-      // Update the logs with display names
-      combinedLogs.forEach((log) => {
+      paginatedLogs.forEach((log) => {
         if (log.type === "chat") {
           log.writter = displayNameMap[log.writter] || log.writter;
         }
       });
     }
 
+    // Update notifications based on user role
     if (req.user.role === "teacher") {
       await neonPool.query(
         `UPDATE notifications SET for_teacher = 0 WHERE student_id = $1`,
@@ -292,19 +311,29 @@ exports.getLogOfStudent = async function (req) {
       );
     }
 
-    combinedLogs.forEach((log) => {
+    // Prepend the BASE_URL to each image path if available
+    paginatedLogs.forEach((log) => {
       if (log.image) {
-        log.image.forEach((image, index) => {
-          log.image[index] = `${process.env.BASE_URL_IMAGE}/${image}`;
-        });
+        log.image = log.image.map((image) => `${process.env.BASE_URL_IMAGE}/${image}`);
       }
     });
 
-    return combinedLogs;
+    // Optionally, determine the next cursor (using the oldest log's timestamp)
+    let nextCursor = null;
+    if (combinedLogs.length > pageSize) {
+      nextCursor = paginatedLogs[paginatedLogs.length - 1].timestamp;
+    }
+
+    // Reverse the paginatedLogs to return them in ascending order (oldest first)
+    return {
+      logs: paginatedLogs.reverse(),
+      nextCursor,
+    };
   } catch (error) {
     throw new Error(error);
   }
 };
+
 
 exports.deleteAllLogs = async function () {
   try {
