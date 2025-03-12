@@ -1,19 +1,5 @@
 require("dotenv").config();
 const { Pool } = require("pg");
-const winston = require("winston");
-
-// Logger setup
-// const logger = winston.createLogger({
-//   level: "info",
-//   format: winston.format.combine(
-//     winston.format.timestamp(),
-//     winston.format.json()
-//   ),
-//   transports: [
-//     new winston.transports.Console(),
-//     new winston.transports.File({ filename: "error.log", level: "error" })
-//   ],
-// });
 
 let { PGHOST, PGDATABASE, PGUSER, PGPASSWORD, ENDPORT } = process.env;
 
@@ -62,7 +48,7 @@ const query = async (text, params) => {
     console.log("Query error", { text, params, error});
     throw error;
   }finally{
-    neonPool.release();
+    neonPool.end();
   }
 };
 
